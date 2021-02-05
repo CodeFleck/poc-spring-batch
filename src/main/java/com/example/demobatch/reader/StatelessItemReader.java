@@ -1,18 +1,22 @@
 package com.example.demobatch.reader;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.stereotype.Component;
 
 import java.util.Iterator;
-import java.util.List;
 
 @Component
+@NoArgsConstructor
+@Data
 public class StatelessItemReader implements ItemReader<String> {
 
-    private final Iterator<String> data;
+    private Iterator<String> data;
 
-    public StatelessItemReader(List<String> data) {
-        this.data = data.iterator();
+    public StatelessItemReader(Iterator<String> data) {
+        this.data = data;
     }
 
     @Override

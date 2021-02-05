@@ -1,47 +1,56 @@
 package com.example.demobatch.config;
 
-import com.example.demobatch.reader.StatelessItemReader;
+import com.example.demobatch.domain.Customer;
+import com.example.demobatch.domain.CustomerRowMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.sql.DataSource;
 
 @Configuration
-@EnableBatchProcessing
 @AllArgsConstructor
 public class JobConfiguration {
 
-    private final JobBuilderFactory jobBuilderFactory;
-    private final StepBuilderFactory stepBuilderFactory;
+    public final JobBuilderFactory jobBuilderFactory;
+    public final StepBuilderFactory stepBuilderFactory;
+    public DataSource dataSource;
 
-    private final StatelessItemReader statelessItemReader() {
-        List<String> data = new ArrayList<>(2);
+    @Bean
+    public ItemReader<Customer> cursorItemReader() {
+        JdbcCursorItemReader<Customer> reader = new JdbcCursorItemReader<>();
 
-        data.add("Gremio");
-        data.add("Internacional");
-        data.add("Juventude");
+        reader.setSql("select * from customer order by lastName, firstName");
+        reader.setDataSource(this.dataSource);
+        reader.setRowMapper(new CustomerRowMapper());
 
-        return new StatelessItemReader(data);
+        return reader;
+    }
+
+    @Bean
+    public ItemWriter<Customer> customerItemWriter() {
+        return items -> {
+            for (Customer item : items) {
+                System.out.println(item.toString());
+            }
+        };
     }
 
 
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<String, String>chunk(3)
-                .reader(statelessItemReader())
-                .writer(list -> {
-                    for (String curItem : list) {
-                        System.out.println("curItem = " + curItem);
-                    }
-                }).build();
+                .<Customer, Customer>chunk(2)
+                .reader(cursorItemReader())
+                .writer(customerItemWriter())
+                .build();
     }
 
     @Bean
