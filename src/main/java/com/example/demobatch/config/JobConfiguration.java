@@ -1,6 +1,8 @@
 package com.example.demobatch.config;
 
-import com.example.demobatch.reader.StatelessItemReader;
+import com.example.demobatch.processor.CustomeItemProcessor;
+import com.example.demobatch.reader.CustomItemReader;
+import com.example.demobatch.writer.CustomItemWriter;
 import lombok.AllArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -21,34 +23,41 @@ public class JobConfiguration {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
 
-    private final StatelessItemReader statelessItemReader() {
-        List<String> data = new ArrayList<>(2);
-
-        data.add("Gremio");
-        data.add("Internacional");
-        data.add("Juventude");
-
-        return new StatelessItemReader(data);
+    @Bean
+    public Job interfacesJob() {
+        return jobBuilderFactory.get("Job1")
+                .start(step1())
+                .build();
     }
-
 
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
                 .<String, String>chunk(3)
-                .reader(statelessItemReader())
-                .writer(list -> {
-                    for (String curItem : list) {
-                        System.out.println("curItem = " + curItem);
-                    }
-                }).build();
+                .reader(customItemReader())
+                .processor(customProcessor())
+                .writer(itemWriter())
+                .build();
     }
 
     @Bean
-    public Job interfacesJob() {
-        return jobBuilderFactory.get("interfacesJob")
-                .start(step1())
-                .build();
+    CustomItemWriter itemWriter() {
+        return new CustomItemWriter();
+    }
+
+    @Bean
+    CustomeItemProcessor customProcessor() {
+        return new CustomeItemProcessor();
+    }
+
+    CustomItemReader customItemReader() {
+        List<String> data = new ArrayList<>();
+
+        data.add("Gremio");
+        data.add("Internacional");
+        data.add("Juventude");
+
+        return new CustomItemReader(data);
     }
 
 }

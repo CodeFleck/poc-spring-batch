@@ -7,11 +7,11 @@ import java.util.Iterator;
 import java.util.List;
 
 @Component
-public class StatelessItemReader implements ItemReader<String> {
+public class CustomItemReader implements ItemReader<String> {
 
     private final Iterator<String> data;
 
-    public StatelessItemReader(List<String> data) {
+    public CustomItemReader(List<String> data) {
         this.data = data.iterator();
     }
 
